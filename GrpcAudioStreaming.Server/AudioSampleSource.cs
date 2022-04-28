@@ -41,27 +41,37 @@ namespace GrpcAudioStreaming.Server
             while (!cancellationToken.IsCancellationRequested)
             {
                 var bytesRead = stream.Read(buffer, 0, buffer.Length);
-
+                
                 if (bytesRead == 0)
                 {
                     // if we have reached the end, reset stream to start
                     stream.CurrentTime = TimeSpan.Zero;
                     streamTimeStart = stream.CurrentTime;
                     realTimeStart = DateTime.UtcNow;
+
+                    var endSample = new AudioSample
+                    {
+                        IsEnded = bytesRead == 0
+                    };
+                    OnAudioSampleCreated(endSample);
                     continue;
                 }
 
                 var time = realTimeStart + stream.CurrentTime;
-                var audioSample = new AudioSample
-                {
-                    Timestamp = time.ToString("o"),
-                    Data = ByteString.CopyFrom(buffer)
-                };
-                OnAudioSampleCreated(audioSample);
 
                 var streamTimePassed = stream.CurrentTime - streamTimeStart;
                 var realTimePassed = DateTime.UtcNow - realTimeStart;
                 var timeDifference = Math.Max(0, (streamTimePassed - realTimePassed).TotalMilliseconds);
+
+                var audioSample = new AudioSample
+                {
+                    Timestamp = time.ToString("o"),
+                    Data = ByteString.CopyFrom(buffer),
+                    Time = streamTimePassed.TotalSeconds.ToString(),
+                    IsEnded = bytesRead == 0
+                };
+
+                OnAudioSampleCreated(audioSample);
                 Thread.Sleep((int)timeDifference);
             }
         }

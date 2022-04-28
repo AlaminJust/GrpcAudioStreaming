@@ -11,6 +11,8 @@ service AudioStream {
 message AudioSample {
   string Timestamp = 1;
   bytes Data = 2;
+  string Time = 3;
+  bool IsEnded = 4;
 }
 
 message AudioFormat {

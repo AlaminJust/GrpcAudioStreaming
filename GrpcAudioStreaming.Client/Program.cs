@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
@@ -24,6 +25,12 @@ namespace GrpcAudioStreaming.Client
 
             await foreach (var sample in audioStream.ResponseStream.ReadAllAsync())
             {
+                if (sample.IsEnded)
+                {
+                    Console.WriteLine($"Audio Ended");
+                    continue;
+                }
+                Console.WriteLine($"Second {sample.Time} \\n Current Time => {sample.Timestamp}");
                 audioPlayer.AddSample(sample.Data.ToByteArray());
             }
         }
